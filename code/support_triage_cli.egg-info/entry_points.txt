@@ -1,0 +1,3 @@
+[console_scripts]
+triage-cli = main:main
+triage-eval = evaluator:main
