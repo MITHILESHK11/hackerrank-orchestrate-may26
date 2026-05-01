@@ -115,6 +115,11 @@ Run on full file:
 triage-cli
 ```
 
+By default:
+
+- full run writes `support_tickets/output.csv`
+- sample run writes `support_tickets/output.sample.csv`
+
 Custom paths:
 
 ```bash
@@ -125,6 +130,12 @@ triage-cli --input support_tickets/support_tickets.csv --output support_tickets/
 
 ```bash
 triage-eval --sample support_tickets/sample_support_tickets.csv --output support_tickets/output.csv
+```
+
+Recommended for sample evaluation:
+
+```bash
+triage-eval --sample support_tickets/sample_support_tickets.csv --output support_tickets/output.sample.csv
 ```
 
 Fallback:

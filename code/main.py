@@ -43,14 +43,16 @@ def _resolve_project_root() -> Path:
 
 def _parse_args() -> argparse.Namespace:
     project_root = _resolve_project_root()
+    default_input = project_root / "support_tickets" / "support_tickets.csv"
+    default_output = project_root / "support_tickets" / "output.csv"
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--input",
-        default=str(project_root / "support_tickets" / "support_tickets.csv"),
+        default=str(default_input),
     )
     parser.add_argument(
         "--output",
-        default=str(project_root / "support_tickets" / "output.csv"),
+        default=str(default_output),
     )
     parser.add_argument("--sample", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
@@ -152,6 +154,7 @@ def _interactive_mode(
     default_input: Path,
     default_output: Path,
 ) -> None:
+    sample_output = default_output.parent / "output.sample.csv"
     print("\nSupport Triage CLI")
     print("Type one of: triage, sample, full, custom, eval, help, exit")
 
@@ -162,10 +165,10 @@ def _interactive_mode(
             return
         if cmd in {"help", "h"}:
             print("triage : run one interactive ticket")
-            print("sample : batch run sample_support_tickets.csv")
-            print("full   : batch run support_tickets.csv")
+            print(f"sample : run sample_support_tickets.csv -> {sample_output.name}")
+            print(f"full   : run support_tickets.csv -> {default_output.name}")
             print("custom : batch run custom input/output paths")
-            print("eval   : evaluate output.csv against sample_support_tickets.csv")
+            print("eval   : evaluate sample_support_tickets.csv against sample output file")
             print("exit   : quit")
             continue
         if cmd == "triage":
@@ -179,11 +182,11 @@ def _interactive_mode(
             output_df = _run_batch(
                 agent=agent,
                 input_path=default_input.parent / "sample_support_tickets.csv",
-                output_path=default_output,
+                output_path=sample_output,
                 verbose=True,
             )
             print(
-                f"Done. Wrote {len(output_df)} rows to {default_output}"
+                f"Done. Wrote {len(output_df)} rows to {sample_output}"
             )
             continue
         if cmd == "full":
@@ -213,13 +216,15 @@ def _interactive_mode(
             continue
         if cmd == "eval":
             sample_path = default_input.parent / "sample_support_tickets.csv"
+            eval_output = sample_output if sample_output.exists() else default_output
             cmdline = [
                 sys.executable,
-                "evaluator.py",
+                "-m",
+                "evaluator",
                 "--sample",
                 str(sample_path),
                 "--output",
-                str(default_output),
+                str(eval_output),
             ]
             subprocess.run(cmdline, check=False)
             continue
@@ -237,6 +242,10 @@ def main() -> None:
     if args.sample:
         input_path = input_path.parent / "sample_support_tickets.csv"
     output_path = Path(args.output)
+    if args.sample:
+        default_full_output = _resolve_project_root() / "support_tickets" / "output.csv"
+        if output_path.resolve() == default_full_output.resolve():
+            output_path = output_path.parent / "output.sample.csv"
     data_dir = Path(args.data_dir)
     agent = _create_agent(data_dir)
 
